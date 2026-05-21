@@ -1,0 +1,9 @@
+flask
+flask-cors
+librosa
+numpy
+wikipedia-api
+requests
+pymongo
+scikit-learn
+tensorflow
