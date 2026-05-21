@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Learn Classical Music — ClassicaLens</title>
+  <meta name="description" content="Beginner-friendly lessons on classical music structures — ragas, talas, scales, and more. No prior knowledge needed."/>
+  <link rel="stylesheet" href="css/main.css"/>
+  <style>
+    .lessons-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(320px,1fr)); gap: 1.5rem; }
+    .lesson-card { padding: 2rem; cursor: pointer; position: relative; overflow: hidden; }
+    .lesson-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--lc,var(--color-purple)),var(--color-gold)); }
+    .lesson-icon { font-size:2.5rem; display:block; margin-bottom:1rem; }
+    .lesson-tag { font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.5rem; color:var(--color-purple-light); }
+    .lesson-card h3 { margin-bottom:0.75rem; font-size:1.15rem; }
+    .lesson-card p { font-size:0.88rem; }
+    .lesson-card .read-time { font-size:0.78rem; color:var(--text-muted); margin-top:1rem; }
+
+    /* Lesson detail */
+    .lesson-overlay { position:fixed; inset:0; z-index:600; background:rgba(0,0,0,0.8); backdrop-filter:blur(10px); display:flex; align-items:center; justify-content:center; padding:1rem; opacity:0; pointer-events:none; transition:opacity 0.3s ease; }
+    .lesson-overlay.open { opacity:1; pointer-events:all; }
+    .lesson-panel { background:var(--bg-secondary); border:1px solid var(--border-glass); border-radius:var(--radius-xl); max-width:720px; width:100%; max-height:90vh; overflow-y:auto; transform:scale(0.92); transition:transform var(--transition-bounce); }
+    .lesson-overlay.open .lesson-panel { transform:scale(1); }
+    .lesson-panel-header { padding:2rem; border-bottom:1px solid var(--border-glass); display:flex; justify-content:space-between; align-items:flex-start; position:sticky; top:0; background:var(--bg-secondary); border-radius:var(--radius-xl) var(--radius-xl) 0 0; z-index:1; }
+    .close-btn { width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.06); border:1px solid var(--border-glass); color:var(--text-secondary); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all var(--transition-fast); }
+    .close-btn:hover { background:rgba(255,255,255,0.12); color:var(--text-primary); }
+    .lesson-panel-body { padding:2rem; }
+    .lesson-panel-body h4 { color:var(--color-purple-light); font-size:0.88rem; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.5rem; margin-top:1.5rem; }
+    .lesson-panel-body p { font-size:0.93rem; margin-bottom:0.75rem; }
+    .lesson-panel-body ul { list-style:none; display:flex; flex-direction:column; gap:0.5rem; }
+    .lesson-panel-body ul li::before { content:'✦ '; color:var(--color-gold); }
+    .lesson-panel-body ul li { font-size:0.9rem; color:var(--text-secondary); }
+    .key-box { background:rgba(124,111,255,0.08); border:1px solid rgba(124,111,255,0.2); border-radius:var(--radius-md); padding:1.25rem; margin:1rem 0; }
+    .key-box strong { color:var(--color-purple-light); }
+
+    /* Quiz */
+    .quiz-section { background:var(--bg-card); border:1px solid var(--border-glass); border-radius:var(--radius-lg); padding:2rem; margin-top:2rem; }
+    .quiz-q { font-family:var(--font-display); font-weight:600; font-size:1.1rem; margin-bottom:1.25rem; }
+    .quiz-options { display:flex; flex-direction:column; gap:0.75rem; }
+    .quiz-option { padding:0.85rem 1.25rem; border-radius:var(--radius-md); background:rgba(255,255,255,0.04); border:1px solid var(--border-glass); cursor:pointer; font-size:0.9rem; transition:all var(--transition-fast); text-align:left; color:var(--text-primary); }
+    .quiz-option:hover { border-color:var(--color-purple); background:rgba(124,111,255,0.1); }
+    .quiz-option.correct { border-color:var(--color-green); background:rgba(0,229,160,0.1); color:var(--color-green); }
+    .quiz-option.wrong { border-color:#e74c3c; background:rgba(231,76,60,0.1); color:#ff6b6b; }
+    .quiz-result { padding:1rem; border-radius:var(--radius-md); margin-top:1rem; font-weight:600; display:none; }
+    .quiz-result.show { display:block; }
+    .quiz-result.correct { background:rgba(0,229,160,0.1); border:1px solid rgba(0,229,160,0.3); color:var(--color-green); }
+    .quiz-result.wrong { background:rgba(231,76,60,0.1); border:1px solid rgba(231,76,60,0.3); color:#ff6b6b; }
+
+    /* Glossary */
+    .glossary-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:1rem; }
+    .glossary-card { padding:1.25rem; }
+    .glossary-term { font-family:var(--font-display); font-weight:700; font-size:1rem; color:var(--color-gold-light); margin-bottom:0.25rem; }
+    .glossary-origin { font-size:0.75rem; color:var(--text-muted); margin-bottom:0.5rem; }
+    .glossary-def { font-size:0.85rem; }
+  </style>
+</head>
+<body>
+<div class="bg-orbs" aria-hidden="true">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<nav class="nav" role="navigation" aria-label="Main navigation">
+  <a href="index.html" class="nav-brand">
+    <div class="nav-brand-icon" aria-hidden="true">🎵</div>
+    <span class="nav-brand-text">ClassicaLens</span>
+  </a>
+  <ul class="nav-links" role="list">
+    <li><a href="index.html" class="nav-link">Home</a></li>
+    <li><a href="analyzer.html" class="nav-link">Analyze</a></li>
+    <li><a href="explorer.html" class="nav-link">Explore</a></li>
+    <li><a href="learn.html" class="nav-link active">Learn</a></li>
+  </ul>
+  <a href="analyzer.html" class="nav-cta">🎙️ Analyze</a>
+</nav>
+
+<main>
+  <div class="page-header">
+    <div class="section-label">📖 Beginner Lessons</div>
+    <h1>Understand Classical <span class="gradient-text">Music Structures</span></h1>
+    <p class="section-subtitle mt-2">No prior knowledge needed. Simple, clear explanations of the concepts that make classical music tick.</p>
+  </div>
+
+  <div class="section" style="padding-top:0;">
+    <div class="section-header">
+      <div class="section-label">📚 Lessons</div>
+      <h2>Start Your <span class="gradient-text">Journey</span></h2>
+    </div>
+    <div class="lessons-grid" id="lessonsGrid"></div>
+
+    <!-- Quiz -->
+    <div class="section-header mt-4" style="margin-top:4rem;">
+      <div class="section-label">🎮 Quick Quiz</div>
+      <h2>Test Your <span class="gradient-text">Knowledge</span></h2>
+    </div>
+    <div class="quiz-section" id="quizSection">
+      <div class="quiz-q" id="quizQ">Loading question...</div>
+      <div class="quiz-options" id="quizOptions"></div>
+      <div class="quiz-result" id="quizResult"></div>
+      <button class="btn btn-secondary btn-sm mt-3" id="nextQuizBtn" onclick="nextQuiz()" style="display:none;">Next Question →</button>
+    </div>
+
+    <!-- Glossary -->
+    <div class="section-header mt-4" style="margin-top:4rem;">
+      <div class="section-label">📖 Glossary</div>
+      <h2>Key <span class="gradient-text">Terms</span></h2>
+    </div>
+    <div class="glossary-grid" id="glossaryGrid"></div>
+  </div>
+</main>
+
+<!-- Lesson Detail Overlay -->
+<div class="lesson-overlay" id="lessonOverlay" role="dialog" aria-modal="true" onclick="closeLessonIfBg(event)">
+  <div class="lesson-panel" id="lessonPanel" tabindex="-1">
+    <div class="lesson-panel-header">
+      <div>
+        <div style="font-size:2rem;margin-bottom:0.5rem;" id="lpIcon">📖</div>
+        <h2 id="lpTitle" style="margin-bottom:0.25rem;">—</h2>
+        <span class="tag tag-purple" id="lpTag">Lesson</span>
+      </div>
+      <button class="close-btn" onclick="closeLesson()" aria-label="Close lesson">✕</button>
+    </div>
+    <div class="lesson-panel-body" id="lpBody"></div>
+  </div>
+</div>
+
+<footer class="footer" role="contentinfo">
+  <div class="footer-brand gradient-text">ClassicaLens 🎵</div>
+  <nav class="footer-links">
+    <a href="index.html" class="footer-link">Home</a>
+    <a href="analyzer.html" class="footer-link">Analyzer</a>
+    <a href="explorer.html" class="footer-link">Explorer</a>
+    <a href="learn.html" class="footer-link">Learn</a>
+  </nav>
+  <p class="footer-copy">VIBE ATHON Problem 12 — Classical Music for Everyone</p>
+</footer>
+
+<script src="js/knowledge-base.js"></script>
+<script src="js/ui.js"></script>
+<script>
+const LESSONS = [
+  {
+    id:'raga', icon:'🎼', tag:'Indian Classical', color:'#FF6B6B', readTime:'5 min',
+    title:'What is a Raga?',
+    summary:'The melodic soul of Indian classical music — a raga is far more than a scale.',
+    content: [
+      { type:'text', text:'A <strong>raga</strong> (Sanskrit: "coloring the mind") is the fundamental melodic framework of Indian classical music — both Carnatic and Hindustani. But it\'s much more than just a set of notes.' },
+      { type:'key', text:'<strong>Key Insight:</strong> A raga isn\'t just a scale — it\'s a personality. Each raga has ascending notes (aaroh), descending notes (avaroh), characteristic phrases, a dominant note (vadi), and an emotional identity (rasa).' },
+      { type:'heading', text:'Ragas and Time' },
+      { type:'text', text:'Traditional ragas are assigned to specific times of day or seasons. Raag Bhairav is for early morning; Raag Yaman for the evening. Playing a raga at the "wrong" time is considered inappropriate, like serving breakfast food at a midnight dinner.' },
+      { type:'heading', text:'How Many Ragas Exist?' },
+      { type:'text', text:'There are thousands of documented ragas — some scholars count over 300 in common use, with hundreds more in historical texts. Each creates a distinct emotional landscape.' },
+      { type:'list', items:['Raga = melodic framework + emotional identity','Each note is ornamental (gamaka) — slides and shakes give life','Improvisation happens within the raga\'s "grammar"','A raga can be performed for 20 minutes or 3 hours'] },
+    ]
+  },
+  {
+    id:'tala', icon:'🥁', tag:'Indian Classical', color:'#4ECDC4', readTime:'4 min',
+    title:'Understanding Tala — Rhythmic Cycles',
+    summary:'How Indian music organizes time into repeating rhythmic cycles called talas.',
+    content:[
+      { type:'text', text:'A <strong>tala</strong> is a rhythmic cycle of beats that forms the time-keeping backbone of Indian classical music. Unlike Western time signatures (3/4, 4/4), talas can have complex structures with unequal divisions.' },
+      { type:'key', text:'<strong>Example:</strong> Teentaal — the most popular Hindustani tala — has 16 beats divided into 4 groups of 4. Ektaal has 12 beats in a 2+2+2+2+2+2 pattern.' },
+      { type:'heading', text:'Sam — The Magic Beat' },
+      { type:'text', text:'The first beat of every tala cycle is called "sam." A hallmark of great performances is when the soloist\'s improvisation lands precisely on sam after a complex exploration — the audience responds with appreciation because they\'ve been counting along.' },
+      { type:'list', items:['Tala = rhythmic cycle with defined beats','Sam = first (and most important) beat','Tabla and mridangam keep the tala','Audience often claps/counts along'] },
+    ]
+  },
+  {
+    id:'counterpoint', icon:'🎻', tag:'Baroque', color:'#F7DC6F', readTime:'5 min',
+    title:'Counterpoint — Multiple Melodies at Once',
+    summary:'The art of weaving independent melodic lines together harmoniously.',
+    content:[
+      { type:'text', text:'<strong>Counterpoint</strong> is the technique of combining two or more independent melodic lines that work together harmonically. It\'s the defining feature of Baroque music, especially Bach.' },
+      { type:'key', text:'<strong>Think of it this way:</strong> Imagine three people having separate conversations simultaneously — but somehow every word they say makes perfect grammatical and musical sense together.' },
+      { type:'heading', text:'The Fugue — Counterpoint\'s Peak' },
+      { type:'text', text:'A fugue starts with one voice stating a theme (subject), then a second voice imitates it while the first continues with a new melody. Soon all voices are weaving together. Bach\'s fugues are considered the pinnacle of this technique.' },
+      { type:'list', items:['Each voice is a complete, singable melody','Voices enter one at a time, then combine','Harmonic rules govern which notes can sound together','Bach\'s Well-Tempered Clavier is the textbook example'] },
+    ]
+  },
+  {
+    id:'modes', icon:'🌍', tag:'World Music', color:'#F39C12', readTime:'6 min',
+    title:'Scales & Modes Around the World',
+    summary:'Different cultures built different note systems — here\'s how they compare.',
+    content:[
+      { type:'text', text:'Western classical music uses 12 equal semitones in an octave. But many classical traditions use different interval systems — some smaller than a semitone (microtones), creating sounds Western ears find exotic.' },
+      { type:'key', text:'<strong>Maqam music</strong> (Arabic) uses quarter tones — notes that fall between the piano\'s keys. This gives Arabic music its distinctive aching, searching quality impossible on a standard piano.' },
+      { type:'heading', text:'Why Different Systems?' },
+      { type:'text', text:'Different tuning systems emerged from different physics, aesthetics, and cultural values. The Indian sruti system divides the octave into 22 intervals. Chinese classical music uses pentatonic (5-note) scales. Balinese music uses different tunings per instrument set.' },
+      { type:'list', items:['Western: 12 equal semitones','Indian: 22 shrutis (microtonal)','Arabic Maqam: quarter tones','Chinese: 5-note pentatonic','All equally "correct" — just different'] },
+    ]
+  },
+  {
+    id:'improv', icon:'🎭', tag:'Improvisation', color:'#8E44AD', readTime:'4 min',
+    title:'The Art of Musical Improvisation',
+    summary:'How classical musicians create new music in the moment — within strict rules.',
+    content:[
+      { type:'text', text:'Improvisation in classical music doesn\'t mean random playing — it means <em>spontaneous creation within a sophisticated framework</em>. The rules actually enable freedom.' },
+      { type:'key', text:'<strong>Analogy:</strong> Think of improvisation like speaking fluently in a language. You don\'t recite memorized sentences — you construct new ones instantly using grammar rules you\'ve internalized.' },
+      { type:'heading', text:'Traditions that Emphasize Improvisation' },
+      { type:'list', items:['Hindustani classical: alap explores raga freely for 30+ min','Carnatic manodharma: spontaneous composition within raga','Maqam taqsim: unaccompanied solo improvisation','Flamenco: singer, guitarist and dancer improvise together','Jazz: similar concept, Western tradition'] },
+    ]
+  },
+  {
+    id:'preservation', icon:'🏛️', tag:'Heritage', color:'#2ECC71', readTime:'5 min',
+    title:'Why Classical Music Needs Preservation',
+    summary:'The urgent challenge of keeping ancient traditions alive in a changing world.',
+    content:[
+      { type:'text', text:'Many classical traditions face existential challenges: fewer students, aging master practitioners, shrinking audiences, and competition from popular music. The loss of a tradition means losing a unique way of experiencing human emotion.' },
+      { type:'key', text:'<strong>UNESCO Intangible Cultural Heritage:</strong> Carnatic music, Gagaku, Flamenco, Tango, and Guqin are all on UNESCO\'s Intangible Cultural Heritage list — recognition that they need protection.' },
+      { type:'heading', text:'What Preservation Means' },
+      { type:'text', text:'Preservation isn\'t about freezing music in the past — it\'s about ensuring the living tradition continues to evolve. Recording archives, formal education, and digital platforms all play crucial roles.' },
+      { type:'list', items:['Master-disciple transmission carries oral tradition','Digital archives preserve recordings and notation','Festivals maintain community and audience','Apps like ClassicaLens create new entry points','Young artists keep traditions alive by innovating'] },
+    ]
+  }
+];
+
+const QUIZ = [
+  { q:'What is a "raga" in Indian classical music?', opts:['A type of drum','A melodic framework with emotional identity','A rhythmic cycle','A type of instrument'], correct:1 },
+  { q:'Which period of classical music is characterized by counterpoint and elaborate ornamentation?', opts:['Romantic','Modern','Baroque','Medieval'], correct:2 },
+  { q:'What does "tala" refer to in Carnatic and Hindustani music?', opts:['A melodic scale','A type of flute','A rhythmic cycle','A vocal technique'], correct:2 },
+  { q:'Flamenco originated as an art form of which communities in Spain?', opts:['Castilian nobility','Roma, Moorish, and Jewish communities','Spanish military','Catalonian fishermen'], correct:1 },
+  { q:'Which instrument is central to Argentine Tango?', opts:['Violin','Flute','Guitar','Bandoneón'], correct:3 },
+  { q:'"Tarab" in Maqam music refers to:', opts:['A type of scale','The ecstatic emotional state induced by music','A rhythmic pattern','A string instrument'], correct:1 },
+  { q:'How old is the Guqin tradition from China?', opts:['500 years','1,000 years','3,000+ years','200 years'], correct:2 },
+  { q:'What is "duende" in Flamenco?', opts:['A type of guitar chord','The deep emotional spirit that makes a performance transcendent','A Spanish dance step','The first beat of a rhythm'], correct:1 },
+];
+
+const GLOSSARY = [
+  { term:'Raga', origin:'Sanskrit', def:'A melodic framework in Indian classical music with specific notes, phrases, and emotional identity.' },
+  { term:'Tala', origin:'Sanskrit', def:'A rhythmic cycle of beats forming the time-keeping structure in Indian classical music.' },
+  { term:'Alap', origin:'Hindi', def:'The slow, free-form opening section of a Hindustani performance that introduces the raga.' },
+  { term:'Counterpoint', origin:'Latin', def:'The technique of combining two or more independent melodies simultaneously in Western classical music.' },
+  { term:'Maqam', origin:'Arabic', def:'A system of melodic modes used in Arabic, Turkish, and Persian classical music.' },
+  { term:'Taqsim', origin:'Arabic', def:'An improvised instrumental solo in Maqam music, usually without rhythmic accompaniment.' },
+  { term:'Duende', origin:'Spanish', def:'The deep, ineffable spirit of emotional authenticity in Flamenco performance.' },
+  { term:'Gamaka', origin:'Sanskrit', def:'Ornamental slides, shakes, and inflections that give life to notes in Carnatic music.' },
+  { term:'Fugue', origin:'Latin', def:'A Baroque compositional technique where a theme is introduced and developed by multiple independent voices.' },
+  { term:'Tarab', origin:'Arabic', def:'The state of emotional ecstasy or being deeply moved by music in the Maqam tradition.' },
+  { term:'Sam', origin:'Sanskrit', def:'The crucial first beat of a tala cycle in Indian classical music.' },
+  { term:'Sruti', origin:'Sanskrit', def:'The smallest interval of pitch in Indian classical music; also refers to the tonal drone.' },
+];
+
+// Build Lessons Grid
+const grid = document.getElementById('lessonsGrid');
+LESSONS.forEach((l,i) => {
+  const card = document.createElement('div');
+  card.className = 'glass-card lesson-card reveal';
+  card.style.setProperty('--lc', l.color);
+  card.style.animationDelay = `${i*0.05}s`;
+  card.setAttribute('role','button');
+  card.setAttribute('tabindex','0');
+  card.setAttribute('aria-label',`Open lesson: ${l.title}`);
+  card.innerHTML = `
+    <span class="lesson-icon">${l.icon}</span>
+    <div class="lesson-tag">${l.tag}</div>
+    <h3>${l.title}</h3>
+    <p>${l.summary}</p>
+    <div class="read-time">⏱️ ${l.readTime} read</div>
+  `;
+  const open = () => openLesson(l);
+  card.addEventListener('click', open);
+  card.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') open(); });
+  grid.appendChild(card);
+});
+
+function openLesson(l) {
+  document.getElementById('lpIcon').textContent = l.icon;
+  document.getElementById('lpTitle').textContent = l.title;
+  document.getElementById('lpTag').textContent = l.tag;
+  const body = document.getElementById('lpBody');
+  body.innerHTML = l.content.map(block => {
+    if (block.type === 'text') return `<p>${block.text}</p>`;
+    if (block.type === 'heading') return `<h4>${block.text}</h4>`;
+    if (block.type === 'key') return `<div class="key-box">${block.text}</div>`;
+    if (block.type === 'list') return `<ul>${block.items.map(i=>`<li>${i}</li>`).join('')}</ul>`;
+    return '';
+  }).join('') + `<div style="margin-top:2rem;display:flex;gap:1rem;flex-wrap:wrap;">
+    <a href="explorer.html" class="btn btn-primary btn-sm">🌍 Explore Traditions</a>
+    <a href="analyzer.html" class="btn btn-secondary btn-sm">🎙️ Try Analyzer</a>
+  </div>`;
+  document.getElementById('lessonOverlay').classList.add('open');
+  document.getElementById('lessonPanel').focus();
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLesson() {
+  document.getElementById('lessonOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function closeLessonIfBg(e) { if(e.target===document.getElementById('lessonOverlay')) closeLesson(); }
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeLesson(); });
+
+// Quiz
+let quizIdx = 0, answered = false;
+function loadQuiz(idx) {
+  answered = false;
+  const q = QUIZ[idx % QUIZ.length];
+  document.getElementById('quizQ').textContent = q.q;
+  document.getElementById('quizResult').className = 'quiz-result';
+  document.getElementById('quizResult').textContent = '';
+  document.getElementById('nextQuizBtn').style.display = 'none';
+  const opts = document.getElementById('quizOptions');
+  opts.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option';
+    btn.textContent = opt;
+    btn.setAttribute('aria-label', `Option: ${opt}`);
+    btn.onclick = () => {
+      if (answered) return;
+      answered = true;
+      document.querySelectorAll('.quiz-option').forEach(b => b.disabled = true);
+      btn.classList.add(i === q.correct ? 'correct' : 'wrong');
+      if (i === q.correct) {
+        document.querySelectorAll('.quiz-option')[q.correct].classList.add('correct');
+        const r = document.getElementById('quizResult');
+        r.textContent = '✅ Correct! Well done!';
+        r.className = 'quiz-result correct show';
+      } else {
+        document.querySelectorAll('.quiz-option')[q.correct].classList.add('correct');
+        const r = document.getElementById('quizResult');
+        r.textContent = `❌ Not quite. The correct answer is: "${q.opts[q.correct]}"`;
+        r.className = 'quiz-result wrong show';
+      }
+      document.getElementById('nextQuizBtn').style.display = 'inline-flex';
+    };
+    opts.appendChild(btn);
+  });
+}
+function nextQuiz() { quizIdx++; loadQuiz(quizIdx); }
+loadQuiz(0);
+
+// Glossary
+const gGrid = document.getElementById('glossaryGrid');
+GLOSSARY.forEach(g => {
+  const card = document.createElement('div');
+  card.className = 'glass-card glossary-card reveal';
+  card.innerHTML = `
+    <div class="glossary-term">${g.term}</div>
+    <div class="glossary-origin">Origin: ${g.origin}</div>
+    <p class="glossary-def">${g.def}</p>
+  `;
+  gGrid.appendChild(card);
+});
+</script>
+</body>
+</html>

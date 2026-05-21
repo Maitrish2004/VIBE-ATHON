@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Music Explorer — ClassicaLens</title>
+  <meta name="description" content="Explore classical music traditions by world region — from Carnatic India to Baroque Europe, Gagaku Japan to Tango Argentina."/>
+  <link rel="stylesheet" href="css/main.css"/>
+  <style>
+    /* ── Region Filter Bar ── */
+    .filter-bar {
+      display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center;
+      margin-bottom: 2.5rem;
+    }
+    .filter-btn {
+      padding: 0.55rem 1.25rem; border-radius: var(--radius-full);
+      background: transparent; border: 1px solid var(--border-glass);
+      color: var(--text-secondary); cursor: pointer;
+      font-family: var(--font-display); font-weight: 600; font-size: 0.88rem;
+      transition: all var(--transition-fast);
+    }
+    .filter-btn:hover { background: rgba(124,111,255,0.1); border-color: var(--color-purple); color: var(--text-primary); }
+    .filter-btn.active { background: rgba(124,111,255,0.2); border-color: var(--color-purple); color: var(--color-purple-light); }
+
+    /* ── Traditions Grid ── */
+    .traditions-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    /* ── Tradition Card ── */
+    .tradition-card {
+      padding: 0; overflow: hidden; cursor: pointer;
+    }
+    .tradition-card-header {
+      padding: 1.5rem 1.5rem 1rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .tradition-emoji { font-size: 2.5rem; }
+    .tradition-flag { font-size: 1.8rem; }
+    .tradition-card-body { padding: 0 1.5rem 1rem; }
+    .tradition-name { font-size: 1.15rem; margin-bottom: 0.3rem; }
+    .tradition-subtitle { font-size: 0.85rem; margin-bottom: 1rem; }
+    .tradition-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .tradition-moods { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .tradition-instruments { color: var(--text-muted); font-size: 0.8rem; }
+    .tradition-card-footer {
+      padding: 0.75rem 1.5rem;
+      border-top: 1px solid var(--border-glass);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .btn-explore { font-size: 0.85rem; font-weight: 600; color: var(--color-purple-light); }
+
+    /* ── Search Bar ── */
+    .search-wrap {
+      position: relative; max-width: 500px; margin: 0 auto 2rem;
+    }
+    .search-icon { position: absolute; left: 1.1rem; top: 50%; transform: translateY(-50%); font-size: 1.1rem; }
+    .search-input {
+      width: 100%; padding: 0.85rem 1rem 0.85rem 2.8rem;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-full);
+      color: var(--text-primary); font-size: 0.95rem; font-family: var(--font-body);
+      outline: none; transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+    .search-input:focus { border-color: var(--color-purple); box-shadow: 0 0 0 3px rgba(124,111,255,0.15); }
+    .search-input::placeholder { color: var(--text-muted); }
+
+    /* ── Detail Panel ── */
+    .detail-overlay {
+      position: fixed; inset: 0; z-index: 500;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(8px);
+      opacity: 0; pointer-events: none;
+      transition: opacity var(--transition-smooth);
+      display: flex; align-items: center; justify-content: center;
+      padding: 1rem;
+    }
+    .detail-overlay.open { opacity: 1; pointer-events: all; }
+    .detail-panel {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-xl);
+      max-width: 700px; width: 100%;
+      max-height: 90vh; overflow-y: auto;
+      transform: scale(0.9) translateY(20px);
+      transition: transform var(--transition-bounce);
+      scrollbar-width: thin;
+    }
+    .detail-overlay.open .detail-panel { transform: scale(1) translateY(0); }
+    .detail-header {
+      padding: 2rem 2rem 1.5rem;
+      border-bottom: 1px solid var(--border-glass);
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+      position: sticky; top: 0;
+      background: var(--bg-secondary); z-index: 1;
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    }
+    .detail-title-block { display: flex; align-items: center; gap: 1rem; }
+    .detail-big-emoji { font-size: 3rem; }
+    .detail-close {
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass);
+      border-radius: 50%; width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 1rem; color: var(--text-secondary);
+      transition: all var(--transition-fast); flex-shrink: 0;
+    }
+    .detail-close:hover { background: rgba(255,255,255,0.12); color: var(--text-primary); }
+    .detail-body { padding: 1.5rem 2rem 2rem; display: flex; flex-direction: column; gap: 1.5rem; }
+    .detail-section h4 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-purple-light); margin-bottom: 0.75rem; }
+    .detail-section p { font-size: 0.92rem; }
+    .tag-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .numbered-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .numbered-item { display: flex; gap: 0.75rem; align-items: flex-start; font-size: 0.88rem; color: var(--text-secondary); }
+    .num-bullet { color: var(--color-gold); font-weight: 700; flex-shrink: 0; margin-top: 0.1rem; }
+    .related-grid { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .related-chip {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 1rem; border-radius: var(--radius-full);
+      background: rgba(124,111,255,0.1); border: 1px solid rgba(124,111,255,0.25);
+      cursor: pointer; font-size: 0.85rem; font-weight: 600;
+      transition: all var(--transition-fast);
+    }
+    .related-chip:hover { background: rgba(124,111,255,0.2); transform: translateY(-2px); }
+
+    /* ── Mood Section ── */
+    .mood-section { padding-top: 2rem; }
+    .mood-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 1rem; }
+    .mood-card {
+      padding: 1.25rem; border-radius: var(--radius-md);
+      background: var(--bg-card); border: 1px solid var(--border-glass);
+      cursor: pointer; transition: all var(--transition-smooth); text-align: center;
+    }
+    .mood-card:hover { background: var(--bg-card-hover); border-color: rgba(124,111,255,0.4); transform: translateY(-3px); }
+    .mood-label-text { font-weight: 600; font-size: 0.95rem; display: block; margin-bottom: 0.5rem; }
+    .mood-count { font-size: 0.8rem; color: var(--text-muted); }
+
+    /* ── No Results ── */
+    .no-results { text-align: center; padding: 4rem 2rem; }
+    .no-results-icon { font-size: 3rem; display: block; margin-bottom: 1rem; }
+
+    @media (max-width: 600px) {
+      .detail-body { padding: 1rem 1.25rem 1.5rem; }
+      .detail-header { padding: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="bg-orbs" aria-hidden="true">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<nav class="nav" role="navigation" aria-label="Main navigation">
+  <a href="index.html" class="nav-brand">
+    <div class="nav-brand-icon" aria-hidden="true">🎵</div>
+    <span class="nav-brand-text">ClassicaLens</span>
+  </a>
+  <ul class="nav-links" role="list">
+    <li><a href="index.html" class="nav-link">Home</a></li>
+    <li><a href="analyzer.html" class="nav-link">Analyze</a></li>
+    <li><a href="explorer.html" class="nav-link active">Explore</a></li>
+    <li><a href="learn.html" class="nav-link">Learn</a></li>
+  </ul>
+  <a href="analyzer.html" class="nav-cta">🎙️ Analyze</a>
+</nav>
+
+<main>
+  <div class="page-header">
+    <div class="section-label">🌍 World Explorer</div>
+    <h1>Explore Classical <span class="gradient-text">Traditions</span></h1>
+    <p class="section-subtitle mt-2">Browse music traditions from across the globe. Filter by region, search by name, or discover by mood.</p>
+  </div>
+
+  <div class="section" style="padding-top:0;">
+    <!-- Search -->
+    <div class="search-wrap" role="search">
+      <span class="search-icon" aria-hidden="true">🔍</span>
+      <input type="search" class="search-input" id="searchInput" placeholder="Search traditions, instruments, artists, moods..." aria-label="Search music traditions" oninput="filterTraditions()"/>
+    </div>
+
+    <!-- Region Filters -->
+    <div class="filter-bar" role="group" aria-label="Filter by region">
+      <button class="filter-btn active" id="filter-all" onclick="setFilter('all')">🌐 All Traditions</button>
+      <button class="filter-btn" id="filter-south-asia" onclick="setFilter('south-asia')">🌏 South Asia</button>
+      <button class="filter-btn" id="filter-europe" onclick="setFilter('europe')">🌍 Europe</button>
+      <button class="filter-btn" id="filter-east-asia" onclick="setFilter('east-asia')">🎋 East Asia</button>
+      <button class="filter-btn" id="filter-middle-east" onclick="setFilter('middle-east')">🌙 Middle East</button>
+      <button class="filter-btn" id="filter-latin-america" onclick="setFilter('latin-america')">🥀 Latin America</button>
+    </div>
+
+    <!-- Traditions Grid -->
+    <div class="traditions-grid" id="traditionsGrid" aria-label="Music traditions"></div>
+    <div class="no-results hidden" id="noResults" aria-live="polite">
+      <span class="no-results-icon" aria-hidden="true">🎵</span>
+      <h3>No traditions found</h3>
+      <p class="text-muted">Try a different search term or clear your filters.</p>
+      <button class="btn btn-secondary mt-3" onclick="clearSearch()">Clear Search</button>
+    </div>
+
+    <!-- Mood Explorer -->
+    <div class="mood-section" id="moods">
+      <div class="section-header">
+        <div class="section-label">🎭 Explore by Mood</div>
+        <h2>How Are You <span class="gradient-text">Feeling?</span></h2>
+        <p class="section-subtitle">Find music that resonates with your current emotional state.</p>
+      </div>
+      <div class="mood-grid" id="moodGrid"></div>
+    </div>
+  </div>
+</main>
+
+<!-- Tradition Detail Panel -->
+<div class="detail-overlay" id="detailOverlay" role="dialog" aria-modal="true" aria-label="Tradition details" onclick="closeDetailIfBg(event)">
+  <div class="detail-panel" id="detailPanel" tabindex="-1">
+    <div class="detail-header">
+      <div class="detail-title-block">
+        <span class="detail-big-emoji" id="detailEmoji">🎵</span>
+        <div>
+          <h2 id="detailName" style="margin-bottom:0.25rem;font-size:1.4rem;">—</h2>
+          <p id="detailSubtitle" style="margin:0;font-size:0.88rem;">—</p>
+        </div>
+      </div>
+      <button class="detail-close" onclick="closeDetail()" aria-label="Close detail panel">✕</button>
+    </div>
+    <div class="detail-body" id="detailBody"></div>
+  </div>
+</div>
+
+<footer class="footer" role="contentinfo">
+  <div class="footer-brand gradient-text">ClassicaLens 🎵</div>
+  <nav class="footer-links">
+    <a href="index.html" class="footer-link">Home</a>
+    <a href="analyzer.html" class="footer-link">Analyzer</a>
+    <a href="explorer.html" class="footer-link">Explorer</a>
+    <a href="learn.html" class="footer-link">Learn</a>
+  </nav>
+  <p class="footer-copy">VIBE ATHON Problem 12 — Making Heritage Music Accessible</p>
+</footer>
+
+<script src="js/knowledge-base.js"></script>
+<script src="js/ui.js"></script>
+<script>
+  let currentFilter = 'all';
+  let currentSearch = '';
+
+  // ─── Build Traditions Grid ───
+  function buildGrid() {
+    const grid = document.getElementById('traditionsGrid');
+    grid.innerHTML = '';
+    let traditions = MUSIC_KB.traditions;
+
+    if (currentFilter !== 'all') traditions = traditions.filter(t => t.region === currentFilter);
+    if (currentSearch) traditions = MUSIC_KB.search(currentSearch).filter(t => currentFilter === 'all' || t.region === currentFilter);
+
+    document.getElementById('noResults').classList.toggle('hidden', traditions.length > 0);
+
+    traditions.forEach((t, i) => {
+      const card = document.createElement('div');
+      card.className = 'glass-card tradition-card reveal';
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('aria-label', `Explore ${t.name}`);
+      card.style.animationDelay = `${i * 0.05}s`;
+      card.innerHTML = `
+        <div class="tradition-card-header" style="background:linear-gradient(135deg,${t.color}20,${t.color}08);">
+          <div class="tradition-emoji">${t.emoji}</div>
+          <div class="tradition-flag">${t.flag}</div>
+        </div>
+        <div class="tradition-card-body">
+          <h3 class="tradition-name">${t.name}</h3>
+          <p class="tradition-subtitle text-muted">${t.subtitle}</p>
+          <div class="tradition-meta">
+            <span class="tag tag-purple">🌍 ${t.country}</span>
+            <span class="tag">${t.period}</span>
+          </div>
+          <div class="tradition-moods mt-2">
+            ${t.moodTags.map(m => `<span class="tag" style="font-size:0.75rem;">${m}</span>`).join('')}
+          </div>
+          <div class="tradition-instruments mt-2">
+            <small class="text-muted">🎵 ${t.instruments.slice(0,3).join(' · ')}</small>
+          </div>
+        </div>
+        <div class="tradition-card-footer">
+          <span class="tag tag-gold">Explore →</span>
+          <a href="analyzer.html" class="tag" style="font-size:0.75rem;">🔍 Analyze</a>
+        </div>
+      `;
+      card.addEventListener('click', (e) => {
+        if (!e.target.closest('a')) openDetail(t.id);
+      });
+      card.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') openDetail(t.id); });
+      grid.appendChild(card);
+    });
+
+    setTimeout(() => UI.initScrollReveal(), 50);
+
+    // Handle hash navigation
+    const hash = window.location.hash.replace('#','');
+    if (hash) {
+      const t = MUSIC_KB.getTradition(hash);
+      if (t) setTimeout(() => openDetail(hash), 300);
+    }
+  }
+
+  // ─── Filter & Search ───
+  function setFilter(region) {
+    currentFilter = region;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`filter-${region}`).classList.add('active');
+    buildGrid();
+  }
+
+  function filterTraditions() {
+    currentSearch = document.getElementById('searchInput').value.trim();
+    buildGrid();
+  }
+
+  function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    currentSearch = '';
+    buildGrid();
+  }
+
+  // ─── Detail Panel ───
+  function openDetail(id) {
+    const t = MUSIC_KB.getTradition(id);
+    if (!t) return;
+    document.getElementById('detailEmoji').textContent = t.emoji;
+    document.getElementById('detailName').textContent = t.name;
+    document.getElementById('detailSubtitle').textContent = `${t.flag} ${t.country} · ${t.period}`;
+
+    const related = MUSIC_KB.getRelated(id);
+    document.getElementById('detailBody').innerHTML = `
+      <div class="detail-section">
+        <h4>Cultural Background</h4>
+        <p>${t.culturalContext}</p>
+      </div>
+      <div class="detail-section">
+        <h4>For Beginners</h4>
+        <p>${t.beginnerExplanation}</p>
+      </div>
+      <div class="detail-section">
+        <h4>Instruments</h4>
+        <div class="tag-list">${t.instruments.map(i => `<span class="tag">🎵 ${i}</span>`).join('')}</div>
+      </div>
+      <div class="detail-section">
+        <h4>Moods & Emotions</h4>
+        <div class="tag-list">${t.moodTags.map(m => `<span class="tag tag-purple">${m}</span>`).join('')}</div>
+      </div>
+      <div class="detail-section">
+        <h4>Characteristics</h4>
+        <div class="numbered-list">
+          ${t.characteristics.map((c,i) => `<div class="numbered-item"><span class="num-bullet">${i+1}.</span><span>${c}</span></div>`).join('')}
+        </div>
+      </div>
+      <div class="detail-section">
+        <h4>Key Artists</h4>
+        <div class="tag-list">${t.keyArtists.map(a => `<span class="tag tag-gold">👤 ${a}</span>`).join('')}</div>
+      </div>
+      <div class="detail-section">
+        <h4>Famous Works</h4>
+        <div class="numbered-list">
+          ${t.famousWorks.map((w,i) => `<div class="numbered-item"><span class="num-bullet">♪</span><span>${w}</span></div>`).join('')}
+        </div>
+      </div>
+      ${related.length > 0 ? `
+        <div class="detail-section">
+          <h4>Related Traditions</h4>
+          <div class="related-grid">
+            ${related.map(r => `
+              <div class="related-chip" onclick="openDetail('${r.id}')" role="button" tabindex="0" aria-label="Open ${r.name}">
+                ${r.emoji} ${r.name}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+      <div style="display:flex;gap:1rem;padding-top:1rem;flex-wrap:wrap;">
+        <a href="analyzer.html" class="btn btn-primary btn-sm">🔍 Analyze This Style</a>
+        <a href="learn.html" class="btn btn-secondary btn-sm">📖 Learn More</a>
+      </div>
+    `;
+    document.getElementById('detailOverlay').classList.add('open');
+    document.getElementById('detailPanel').focus();
+    document.body.style.overflow = 'hidden';
+    history.pushState(null, '', `#${id}`);
+  }
+
+  function closeDetail() {
+    document.getElementById('detailOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+    history.pushState(null, '', window.location.pathname);
+  }
+
+  function closeDetailIfBg(e) {
+    if (e.target === document.getElementById('detailOverlay')) closeDetail();
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
+
+  // ─── Mood Grid ───
+  function buildMoodGrid() {
+    const grid = document.getElementById('moodGrid');
+    MUSIC_KB.moods.forEach(mood => {
+      const card = document.createElement('div');
+      card.className = 'mood-card';
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('aria-label', `Filter by mood: ${mood.label}`);
+      card.innerHTML = `
+        <span class="mood-label-text">${mood.label}</span>
+        <span class="mood-count">${mood.traditions.length} tradition${mood.traditions.length>1?'s':''}</span>
+      `;
+      const filter = () => {
+        document.getElementById('searchInput').value = mood.id;
+        currentSearch = mood.id;
+        currentFilter = 'all';
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('filter-all').classList.add('active');
+        buildGrid();
+        window.scrollTo({top: document.getElementById('traditionsGrid').offsetTop - 100, behavior:'smooth'});
+      };
+      card.addEventListener('click', filter);
+      card.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') filter(); });
+      grid.appendChild(card);
+    });
+  }
+
+  // Init
+  buildGrid();
+  buildMoodGrid();
+</script>
+</body>
+</html>

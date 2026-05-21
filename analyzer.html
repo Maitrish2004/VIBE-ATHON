@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Audio Analyzer — ClassicaLens</title>
+  <meta name="description" content="Upload or record audio to identify its classical music style, mood, and cultural background. Beginner-friendly explanations included."/>
+  <link rel="stylesheet" href="css/main.css"/>
+  <style>
+    .analyzer-page { padding-top: var(--nav-height); min-height: 100vh; }
+
+    /* ── Input Zone ── */
+    .input-zone { max-width: 900px; margin: 0 auto; padding: 3rem 2rem 2rem; }
+    .input-title { text-align: center; margin-bottom: 2.5rem; }
+    .input-title .section-label { margin-bottom: 0.75rem; }
+
+    .input-tabs {
+      display: flex; gap: 0.5rem; justify-content: center;
+      margin-bottom: 2rem; flex-wrap: wrap;
+    }
+    .input-tab {
+      padding: 0.6rem 1.5rem; border-radius: var(--radius-full);
+      font-family: var(--font-display); font-weight: 600; font-size: 0.9rem;
+      cursor: pointer; border: 1px solid var(--border-glass);
+      background: transparent; color: var(--text-secondary);
+      transition: all var(--transition-fast);
+    }
+    .input-tab.active, .input-tab:hover {
+      background: rgba(124,111,255,0.2); border-color: var(--color-purple);
+      color: var(--color-purple-light);
+    }
+    .input-tab.active { background: rgba(124,111,255,0.25); }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Upload Drop Zone ── */
+    .drop-zone {
+      border: 2px dashed rgba(124,111,255,0.4);
+      border-radius: var(--radius-lg);
+      padding: 3.5rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition-smooth);
+      position: relative;
+    }
+    .drop-zone.drag-over {
+      border-color: var(--color-purple);
+      background: rgba(124,111,255,0.08);
+      transform: scale(1.01);
+    }
+    .drop-zone-icon { font-size: 3.5rem; display: block; margin-bottom: 1rem; }
+    .drop-zone h3 { margin-bottom: 0.5rem; }
+    .drop-zone p { font-size: 0.9rem; }
+    .drop-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .file-info {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 1rem 1.5rem;
+      background: rgba(0,229,160,0.08);
+      border: 1px solid rgba(0,229,160,0.25);
+      border-radius: var(--radius-md);
+      margin-top: 1rem;
+    }
+    .file-info-icon { font-size: 1.5rem; }
+    .file-info-name { font-weight: 600; font-size: 0.9rem; }
+    .file-info-meta { font-size: 0.8rem; color: var(--text-muted); }
+
+    /* ── Record Zone ── */
+    .record-zone { text-align: center; padding: 2rem; }
+    .record-btn-wrap { position: relative; display: inline-block; margin-bottom: 2rem; }
+    .record-btn {
+      width: 100px; height: 100px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--color-purple), #5a4bff);
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.5rem;
+      box-shadow: 0 0 0 0 rgba(124,111,255,0.5);
+      transition: all var(--transition-bounce);
+    }
+    .record-btn:hover { transform: scale(1.05); }
+    .record-btn.recording {
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      animation: recordPulse 1.5s ease-in-out infinite;
+    }
+    @keyframes recordPulse {
+      0% { box-shadow: 0 0 0 0 rgba(231,76,60,0.6); }
+      70% { box-shadow: 0 0 0 24px rgba(231,76,60,0); }
+      100% { box-shadow: 0 0 0 0 rgba(231,76,60,0); }
+    }
+    .record-timer { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .record-status { color: var(--text-muted); font-size: 0.9rem; }
+    .viz-canvas {
+      width: 100%; height: 80px;
+      border-radius: var(--radius-md);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border-glass);
+      margin-top: 1.5rem;
+    }
+
+    /* ── Demo Samples ── */
+    .demo-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+    .demo-card {
+      padding: 1.25rem; border-radius: var(--radius-md);
+      background: var(--bg-card); border: 1px solid var(--border-glass);
+      cursor: pointer; text-align: center;
+      transition: all var(--transition-smooth);
+    }
+    .demo-card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(124,111,255,0.4);
+      transform: translateY(-3px);
+    }
+    .demo-card.selected {
+      border-color: var(--color-purple);
+      background: rgba(124,111,255,0.1);
+    }
+    .demo-emoji { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
+    .demo-name { font-weight: 600; font-size: 0.85rem; display: block; }
+    .demo-origin { font-size: 0.75rem; color: var(--text-muted); }
+
+    /* ── Analyze Button ── */
+    .analyze-section {
+      text-align: center; padding: 2rem;
+    }
+    .analyze-btn {
+      padding: 1rem 3rem; font-size: 1.1rem;
+      background: linear-gradient(135deg, var(--color-gold), #e8950a);
+      color: #1a0f00;
+      border-radius: var(--radius-full); border: none; cursor: pointer;
+      font-family: var(--font-display); font-weight: 700;
+      box-shadow: 0 4px 24px rgba(245,166,35,0.4);
+      transition: all var(--transition-bounce);
+      display: inline-flex; align-items: center; gap: 0.75rem;
+    }
+    .analyze-btn:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 8px 32px rgba(245,166,35,0.6); }
+    .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ── Loading State ── */
+    .loading-state {
+      text-align: center; padding: 3rem;
+      display: none;
+    }
+    .loading-state.active { display: block; }
+    .loading-orb {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--color-purple), var(--color-gold));
+      margin: 0 auto 1.5rem;
+      animation: spin 1.5s linear infinite, scaleOrb 2s ease-in-out infinite;
+    }
+    @keyframes scaleOrb { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+    .loading-steps { display: flex; flex-direction: column; gap: 0.5rem; max-width: 300px; margin: 1.5rem auto; }
+    .loading-step {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.5rem 1rem; border-radius: var(--radius-md);
+      background: var(--bg-card); font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .loading-step.done { color: var(--color-green); }
+    .loading-step.active { color: var(--text-primary); }
+
+    /* ── Results ── */
+    .results-zone { max-width: 900px; margin: 0 auto; padding: 0 2rem 4rem; display: none; }
+    .results-zone.visible { display: block; }
+    .results-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 2rem; flex-wrap: gap;
+    }
+    .results-header h2 { margin: 0; }
+    .reset-btn {
+      padding: 0.5rem 1.25rem; border-radius: var(--radius-full);
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass);
+      color: var(--text-secondary); cursor: pointer; font-size: 0.85rem;
+      transition: all var(--transition-fast);
+    }
+    .reset-btn:hover { border-color: var(--color-purple); color: var(--text-primary); }
+
+    /* Result Card Styles */
+    .result-hero {
+      padding: 2.5rem; margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, rgba(124,111,255,0.08), rgba(245,166,35,0.05));
+    }
+    .result-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.4rem 1rem; border-radius: var(--radius-full);
+      font-size: 0.82rem; font-weight: 700; margin-bottom: 1rem;
+    }
+    .result-emoji { font-size: 1.5rem; }
+    .result-confidence { color: var(--color-gold); }
+    .result-tradition-name { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .result-subtitle { color: var(--text-secondary); margin-bottom: 1.5rem; }
+    .result-mood-label { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .mood-chip {
+      padding: 0.35rem 0.9rem; border-radius: var(--radius-full);
+      font-size: 0.82rem; font-weight: 600;
+      background: rgba(255,255,255,0.06); border: 1px solid var(--border-glass);
+    }
+    .result-analysis-bar { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem; }
+    .analysis-stat { display: flex; flex-direction: column; gap: 0.3rem; }
+    .stat-label { font-size: 0.78rem; color: var(--text-muted); }
+    .result-explanation { font-style: italic; color: var(--text-secondary); padding: 1rem; background: rgba(255,255,255,0.03); border-radius: var(--radius-md); border-left: 3px solid var(--color-purple); }
+    .result-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .result-section { padding: 1.5rem; }
+    .result-section h4 { margin-bottom: 0.75rem; font-size: 1rem; }
+    .result-section p { font-size: 0.9rem; }
+    .characteristics-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+    .characteristics-list li { font-size: 0.88rem; color: var(--text-secondary); }
+    .artist-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .works-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .work-item { display: flex; align-items: center; gap: 0.75rem; }
+    .work-number { width: 24px; height: 24px; background: rgba(124,111,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; color: var(--color-purple-light); flex-shrink: 0; }
+    .work-name { font-size: 0.88rem; color: var(--text-secondary); }
+    .alt-traditions { display: flex; flex-direction: column; gap: 0.75rem; }
+    .alt-card { display: flex; align-items: center; gap: 1rem; padding: 0.75rem; border-radius: var(--radius-md); background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass); transition: all var(--transition-fast); cursor: pointer; }
+    .alt-card:hover { background: rgba(255,255,255,0.08); border-color: rgba(124,111,255,0.3); transform: translateX(4px); }
+    .alt-emoji { font-size: 1.5rem; }
+    .alt-card strong { display: block; font-size: 0.88rem; }
+    .alt-card small { font-size: 0.75rem; }
+
+    @media (max-width: 768px) {
+      .result-sections { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="bg-orbs" aria-hidden="true">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+</div>
+
+<!-- Navigation -->
+<nav class="nav" role="navigation" aria-label="Main navigation">
+  <a href="index.html" class="nav-brand" aria-label="ClassicaLens Home">
+    <div class="nav-brand-icon" aria-hidden="true">🎵</div>
+    <span class="nav-brand-text">ClassicaLens</span>
+  </a>
+  <ul class="nav-links" role="list">
+    <li><a href="index.html" class="nav-link">Home</a></li>
+    <li><a href="analyzer.html" class="nav-link active">Analyze</a></li>
+    <li><a href="explorer.html" class="nav-link">Explore</a></li>
+    <li><a href="learn.html" class="nav-link">Learn</a></li>
+  </ul>
+  <a href="explorer.html" class="nav-cta">🌍 Explore</a>
+</nav>
+
+<div class="analyzer-page">
+  <!-- Input Zone -->
+  <div class="input-zone">
+    <div class="input-title">
+      <div class="section-label">🎙️ Audio Analyzer</div>
+      <h1>Identify Your <span class="gradient-text">Classical Music</span></h1>
+      <p class="section-subtitle mt-2">Upload a recording, use your microphone, or try a demo sample. We'll identify the tradition, mood, and cultural context.</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="input-tabs" role="tablist" aria-label="Input method">
+      <button class="input-tab active" id="tab-upload" role="tab" aria-selected="true" aria-controls="panel-upload" onclick="switchTab('upload')">📁 Upload File</button>
+      <button class="input-tab" id="tab-record" role="tab" aria-selected="false" aria-controls="panel-record" onclick="switchTab('record')">🎙️ Record Live</button>
+      <button class="input-tab" id="tab-demo" role="tab" aria-selected="false" aria-controls="panel-demo" onclick="switchTab('demo')">🎵 Demo Samples</button>
+    </div>
+
+    <!-- Upload Panel -->
+    <div id="panel-upload" class="tab-panel active" role="tabpanel" aria-labelledby="tab-upload">
+      <div class="drop-zone glass-card" id="dropZone" role="region" aria-label="File upload area">
+        <input type="file" id="audioFile" accept="audio/*" aria-label="Select audio file"/>
+        <span class="drop-zone-icon" aria-hidden="true">🎵</span>
+        <h3>Drop your audio file here</h3>
+        <p class="text-muted">Supports MP3, WAV, OGG, M4A &bull; Max 50MB</p>
+        <div style="margin-top:1.5rem;">
+          <span class="tag tag-purple">or click to browse</span>
+        </div>
+      </div>
+      <div class="file-info hidden" id="fileInfo">
+        <span class="file-info-icon">🎵</span>
+        <div>
+          <div class="file-info-name" id="fileName">—</div>
+          <div class="file-info-meta" id="fileMeta">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Record Panel -->
+    <div id="panel-record" class="tab-panel" role="tabpanel" aria-labelledby="tab-record">
+      <div class="record-zone glass-card">
+        <div class="record-btn-wrap">
+          <button class="record-btn" id="recordBtn" onclick="toggleRecording()" aria-label="Start recording">🎙️</button>
+        </div>
+        <div class="record-timer" id="recordTimer">00:00</div>
+        <div class="record-status" id="recordStatus">Click the mic to start recording</div>
+        <canvas class="viz-canvas" id="vizCanvas" width="500" height="80" aria-label="Audio waveform visualizer"></canvas>
+        <p class="text-muted mt-3" style="font-size:0.85rem;">Tip: Sing, hum, or play an instrument for best results. Record at least 5 seconds.</p>
+        <button id="restartRecordBtn" onclick="restartRecording()" aria-label="Record again" style="display:none;margin-top:1.25rem;padding:0.6rem 1.5rem;border-radius:var(--radius-full);background:rgba(255,255,255,0.06);border:1px solid var(--border-glass);color:var(--text-secondary);cursor:pointer;font-family:var(--font-display);font-weight:600;font-size:0.88rem;transition:all 0.2s ease;">🔄 Record Again</button>
+      </div>
+    </div>
+
+    <!-- Demo Panel -->
+    <div id="panel-demo" class="tab-panel" role="tabpanel" aria-labelledby="tab-demo">
+      <p class="text-muted mb-3" style="text-align:center;">Select a classical tradition to see a full analysis demonstration:</p>
+      <div class="demo-grid" id="demoGrid"></div>
+    </div>
+
+    <!-- Analyze Button -->
+    <div class="analyze-section">
+      <button class="analyze-btn" id="analyzeBtn" onclick="runAnalysis()" disabled aria-label="Analyze selected audio">
+        🔍 Analyze Music
+      </button>
+      <p class="text-muted mt-2" style="font-size:0.82rem;" id="analyzeHint">Select an audio source above to begin</p>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" id="loadingState" aria-live="polite" aria-label="Analysis in progress">
+    <div class="loading-orb" aria-hidden="true"></div>
+    <h3>Analyzing Your Music...</h3>
+    <p class="text-muted mt-2">Extracting musical patterns and cultural signatures</p>
+    <div class="loading-steps" id="loadingSteps">
+      <div class="loading-step active" id="step1">⚡ Extracting audio features...</div>
+      <div class="loading-step" id="step2">🎼 Analyzing tempo & rhythm...</div>
+      <div class="loading-step" id="step3">🌍 Matching tradition patterns...</div>
+      <div class="loading-step" id="step4">📖 Building cultural context...</div>
+    </div>
+  </div>
+
+  <!-- Results Zone -->
+  <div class="results-zone" id="resultsZone" aria-live="polite" aria-label="Analysis results">
+    <div class="results-header">
+      <h2>🎯 Analysis Results</h2>
+      <button class="reset-btn" onclick="resetAnalyzer()" aria-label="Start new analysis">↩ New Analysis</button>
+    </div>
+    <div id="resultsContent"></div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer" role="contentinfo">
+  <div class="footer-brand gradient-text">ClassicaLens 🎵</div>
+  <nav class="footer-links" aria-label="Footer navigation">
+    <a href="index.html" class="footer-link">Home</a>
+    <a href="analyzer.html" class="footer-link">Analyzer</a>
+    <a href="explorer.html" class="footer-link">Explorer</a>
+    <a href="learn.html" class="footer-link">Learn</a>
+  </nav>
+  <p class="footer-copy">VIBE ATHON Problem 12 — Classical Music Heritage Explorer</p>
+</footer>
+
+<script src="js/knowledge-base.js"></script>
+<script src="js/audio-engine.js"></script>
+<script src="js/pattern-matcher.js"></script>
+<script src="js/ui.js"></script>
+<script>
+  let currentMode = 'upload'; // upload | record | demo
+  let selectedFile = null;
+  let recordedBlob = null;
+  let selectedDemo = null;
+  let isRecording = false;
+  let recordTimer = null;
+  let recordSeconds = 0;
+
+  // ─── Tab Switching ───
+  function switchTab(tab) {
+    currentMode = tab;
+    ['upload','record','demo'].forEach(t => {
+      document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
+      document.getElementById(`panel-${t}`).classList.toggle('active', t === tab);
+    });
+    updateAnalyzeBtn();
+  }
+
+  function updateAnalyzeBtn() {
+    const btn = document.getElementById('analyzeBtn');
+    const hint = document.getElementById('analyzeHint');
+    const ready = (currentMode === 'upload' && selectedFile) ||
+                  (currentMode === 'record' && recordedBlob) ||
+                  (currentMode === 'demo' && selectedDemo);
+    btn.disabled = !ready;
+    hint.textContent = ready ? 'Ready to analyze! Click the button above.' : 'Select an audio source above to begin';
+  }
+
+  // ─── File Upload ───
+  const fileInput = document.getElementById('audioFile');
+  const dropZone = document.getElementById('dropZone');
+
+  fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('audio/')) handleFile(file);
+    else UI.showToast('Please drop an audio file', 'warning');
+  });
+
+  function handleFile(file) {
+    if (!file) return;
+    selectedFile = file;
+    document.getElementById('fileInfo').classList.remove('hidden');
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileMeta').textContent = `${(file.size/1024/1024).toFixed(2)} MB · ${file.type}`;
+    UI.showToast(`Loaded: ${file.name}`, 'success');
+    updateAnalyzeBtn();
+  }
+
+  // ─── Recording ───
+  async function toggleRecording() {
+    const btn = document.getElementById('recordBtn');
+    const status = document.getElementById('recordStatus');
+    const canvas = document.getElementById('vizCanvas');
+    const restartBtn = document.getElementById('restartRecordBtn');
+
+    if (!isRecording) {
+      try {
+        restartBtn.style.display = 'none';
+        await audioEngine.startRecording();
+        isRecording = true;
+        btn.classList.add('recording');
+        btn.innerHTML = '⏹️';
+        btn.style.display = 'flex';
+        btn.setAttribute('aria-label', 'Stop recording');
+        status.textContent = 'Recording... (speak or play music)';
+        recordSeconds = 0;
+        recordTimer = setInterval(() => {
+          recordSeconds++;
+          const m = String(Math.floor(recordSeconds/60)).padStart(2,'0');
+          const s = String(recordSeconds%60).padStart(2,'0');
+          document.getElementById('recordTimer').textContent = `${m}:${s}`;
+        }, 1000);
+        audioEngine.startLiveViz(canvas, '#7c6fff');
+      } catch(e) {
+        UI.showToast('Microphone access denied. Please allow mic access.', 'error');
+      }
+    } else {
+      clearInterval(recordTimer);
+      recordedBlob = await audioEngine.stopRecording();
+      isRecording = false;
+      btn.classList.remove('recording');
+      btn.innerHTML = '✅';
+      btn.style.display = 'none';
+      btn.setAttribute('aria-label', 'Start recording');
+      status.textContent = `Recording saved (${recordSeconds}s) — ready to analyze!`;
+      audioEngine.stopViz();
+      restartBtn.style.display = 'inline-flex';
+      updateAnalyzeBtn();
+      UI.showToast('Recording complete!', 'success');
+    }
+  }
+
+  // ─── Restart Recording ───
+  function restartRecording() {
+    recordedBlob = null;
+    recordSeconds = 0;
+    const btn = document.getElementById('recordBtn');
+    const restartBtn = document.getElementById('restartRecordBtn');
+    const canvas = document.getElementById('vizCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    btn.innerHTML = '🎙️';
+    btn.style.display = 'flex';
+    btn.setAttribute('aria-label', 'Start recording');
+    document.getElementById('recordTimer').textContent = '00:00';
+    document.getElementById('recordStatus').textContent = 'Click the mic to start a new recording';
+    restartBtn.style.display = 'none';
+    updateAnalyzeBtn();
+  }
+
+  // ─── Demo Grid ───
+  const demoGrid = document.getElementById('demoGrid');
+  MUSIC_KB.traditions.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'demo-card';
+    card.id = `demo-${t.id}`;
+    card.setAttribute('role', 'button');
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('aria-label', `Select ${t.name} demo`);
+    card.innerHTML = `
+      <span class="demo-emoji">${t.emoji}</span>
+      <span class="demo-name">${t.name}</span>
+      <span class="demo-origin">${t.flag} ${t.country}</span>
+    `;
+    const select = () => {
+      document.querySelectorAll('.demo-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      selectedDemo = t.id;
+      updateAnalyzeBtn();
+      UI.showToast(`Selected: ${t.name}`, 'info');
+    };
+    card.addEventListener('click', select);
+    card.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' ') select(); });
+    demoGrid.appendChild(card);
+  });
+
+  // ─── Run Analysis ───
+  async function runAnalysis() {
+    // If recording is still active, stop it first
+    if (isRecording) {
+      await toggleRecording();
+      await delay(300); // small pause to let the blob finalize
+    }
+    document.getElementById('analyzeBtn').disabled = true;
+    document.getElementById('loadingState').classList.add('active');
+    document.getElementById('resultsZone').classList.remove('visible');
+    window.scrollTo({ top: document.getElementById('loadingState').offsetTop - 100, behavior: 'smooth' });
+
+    // Animate loading steps
+    const steps = ['step1','step2','step3','step4'];
+    for (let i = 0; i < steps.length; i++) {
+      await delay(600 + Math.random()*400);
+      document.getElementById(steps[i]).classList.add('done');
+      if (i < steps.length-1) document.getElementById(steps[i+1]).classList.add('active');
+    }
+    await delay(500);
+
+    let result;
+    try {
+      if (currentMode === 'demo') {
+        result = patternMatcher.getDemoResult(selectedDemo);
+      } else if (currentMode === 'upload' && selectedFile) {
+        const buffer = await audioEngine.loadFile(selectedFile);
+        const features = audioEngine.analyzeBuffer(buffer);
+        result = await patternMatcher.match(features, selectedFile);
+      } else if (currentMode === 'record' && recordedBlob) {
+        const file = new File([recordedBlob], 'recording.webm', {type:'audio/webm'});
+        const buffer = await audioEngine.loadFile(file);
+        const features = audioEngine.analyzeBuffer(buffer);
+        result = await patternMatcher.match(features, file);
+      }
+    } catch(e) {
+      // Fallback to demo if audio decode fails
+      const fallback = MUSIC_KB.traditions[Math.floor(Math.random()*MUSIC_KB.traditions.length)];
+      result = patternMatcher.getDemoResult(fallback.id);
+    }
+
+    document.getElementById('loadingState').classList.remove('active');
+    // Reset loading steps
+    steps.forEach(s => { document.getElementById(s).classList.remove('done','active'); });
+    document.getElementById('step1').classList.add('active');
+
+    if (result) {
+      const zone = document.getElementById('resultsZone');
+      zone.classList.add('visible');
+      UI.renderResult(result, document.getElementById('resultsContent'));
+      window.scrollTo({ top: zone.offsetTop - 90, behavior: 'smooth' });
+    }
+  }
+
+  function resetAnalyzer() {
+    selectedFile = null; recordedBlob = null; selectedDemo = null;
+    document.getElementById('resultsZone').classList.remove('visible');
+    document.getElementById('fileInfo').classList.add('hidden');
+    // Also fully reset the record panel
+    const btn = document.getElementById('recordBtn');
+    btn.innerHTML = '🎙️';
+    btn.style.display = 'flex';
+    btn.classList.remove('recording');
+    document.getElementById('recordTimer').textContent = '00:00';
+    document.getElementById('recordStatus').textContent = 'Click the mic to start recording';
+    document.getElementById('restartRecordBtn').style.display = 'none';
+    const canvas = document.getElementById('vizCanvas');
+    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+    if (isRecording) { audioEngine.stopRecording(); isRecording = false; clearInterval(recordTimer); }
+    document.querySelectorAll('.demo-card').forEach(c => c.classList.remove('selected'));
+    switchTab('upload');
+    updateAnalyzeBtn();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>

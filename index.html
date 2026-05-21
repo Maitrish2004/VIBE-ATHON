@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClassicaLens — Discover Classical Music Heritage</title>
+  <meta name="description" content="ClassicaLens helps you explore and understand classical music traditions from around the world — from Carnatic to Baroque, Flamenco to Gagaku. Beginner-friendly." />
+  <link rel="stylesheet" href="css/main.css" />
+  <style>
+    /* ── Light mode extra fixes for index page ── */
+    [data-theme="light"] .hero-subtitle { color: var(--text-secondary); }
+    [data-theme="light"] .step-number { box-shadow: 0 4px 20px rgba(124,111,255,0.25); }
+    [data-theme="light"] .tradition-preview { background: rgba(255,255,255,0.75); border-color: rgba(124,111,255,0.15); color: var(--text-primary); }
+    [data-theme="light"] .tradition-preview-region { color: var(--text-muted); }
+    [data-theme="light"] .cta-section { background: rgba(255,255,255,0.3); }
+    [data-theme="light"] .stat-label { color: var(--text-muted); }
+    [data-theme="light"] .about-member-card { background: rgba(255,255,255,0.75); border-color: rgba(124,111,255,0.15); }
+    /* ── About Section ── */
+    .about-section { padding: 5rem 2rem; max-width: 1100px; margin: 0 auto; }
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start; }
+    .about-text .section-label { margin-bottom: 1rem; }
+    .about-text h2 { margin-bottom: 1.25rem; }
+    .about-text p { margin-bottom: 1rem; line-height: 1.8; }
+    .about-pillars { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; }
+    .about-pillar { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.85rem 1.1rem; border-radius: var(--radius-md); background: rgba(124,111,255,0.06); border: 1px solid rgba(124,111,255,0.12); }
+    .about-pillar-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 0.1rem; }
+    .about-pillar-text strong { display: block; font-size: 0.9rem; margin-bottom: 0.15rem; }
+    .about-pillar-text span { font-size: 0.82rem; color: var(--text-muted); }
+    .team-panel { }
+    .team-label { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.9rem; border-radius: var(--radius-full); background: rgba(245,166,35,0.1); border: 1px solid rgba(245,166,35,0.25); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-gold-light); margin-bottom: 1.25rem; }
+    .team-name { font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin-bottom: 0.4rem; }
+    .team-subtitle { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 2rem; }
+    .members-grid { display: flex; flex-direction: column; gap: 1rem; }
+    .about-member-card { display: flex; align-items: center; gap: 1.1rem; padding: 1.1rem 1.25rem; border-radius: var(--radius-md); background: var(--bg-card); border: 1px solid var(--border-glass); transition: all var(--transition-smooth); }
+    .about-member-card:hover { border-color: rgba(124,111,255,0.3); transform: translateX(4px); box-shadow: var(--shadow-glow); }
+    .member-avatar { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; font-weight: 700; font-family: var(--font-display); }
+    .member-info strong { display: block; font-size: 0.95rem; font-weight: 700; margin-bottom: 0.15rem; }
+    .member-info span { font-size: 0.8rem; color: var(--text-muted); }
+    .hackathon-badge { display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 2rem; padding: 0.6rem 1.25rem; border-radius: var(--radius-full); background: linear-gradient(135deg,rgba(124,111,255,0.15),rgba(245,166,35,0.1)); border: 1px solid rgba(124,111,255,0.25); font-size: 0.82rem; font-weight: 600; color: var(--color-purple-light); }
+    @media (max-width: 768px) { .about-grid { grid-template-columns: 1fr; gap: 2rem; } }
+
+    /* ── Hero ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      padding: var(--nav-height) 2rem 2rem;
+    }
+    .hero-content {
+      max-width: 800px;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+    .hero-label {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.4rem 1.2rem;
+      background: rgba(124,111,255,0.12);
+      border: 1px solid rgba(124,111,255,0.3);
+      border-radius: var(--radius-full);
+      font-size: 0.82rem; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--color-purple-light);
+      margin-bottom: 1.5rem;
+      animation: fadeInUp 0.6s ease both;
+    }
+    .hero-title {
+      font-size: clamp(2.8rem, 7vw, 5rem);
+      font-weight: 900;
+      line-height: 1.08;
+      margin-bottom: 1.5rem;
+      animation: fadeInUp 0.6s ease 0.1s both;
+    }
+    .hero-subtitle {
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto 2.5rem;
+      animation: fadeInUp 0.6s ease 0.2s both;
+    }
+    .hero-actions {
+      display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+      animation: fadeInUp 0.6s ease 0.3s both;
+    }
+    .hero-waveform {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 180px;
+      opacity: 0.15;
+      pointer-events: none;
+    }
+    .hero-bg-notes {
+      position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none;
+    }
+
+    /* ── Stats Bar ── */
+    .stats-bar {
+      background: rgba(255,255,255,0.03);
+      border-top: 1px solid var(--border-glass);
+      border-bottom: 1px solid var(--border-glass);
+      padding: 2rem;
+    }
+    .stats-inner {
+      max-width: 900px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 1rem; text-align: center;
+    }
+    .stat-item { padding: 1rem; }
+    .stat-number {
+      font-family: var(--font-display);
+      font-size: 2.2rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--color-purple-light), var(--color-gold));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .stat-label { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem; }
+
+    /* ── Features Grid ── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    .feature-card {
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .feature-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+    .feature-card h3 { margin-bottom: 0.75rem; font-size: 1.2rem; }
+    .feature-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--color-purple), var(--color-gold));
+      opacity: 0;
+      transition: opacity var(--transition-smooth);
+    }
+    .feature-card:hover::before { opacity: 1; }
+
+    /* ── Traditions Carousel ── */
+    .traditions-scroll {
+      display: flex; gap: 1.5rem;
+      overflow-x: auto; padding-bottom: 1rem;
+      scrollbar-width: none;
+    }
+    .traditions-scroll::-webkit-scrollbar { display: none; }
+    .tradition-preview {
+      min-width: 220px;
+      padding: 1.5rem;
+      border-radius: var(--radius-lg);
+      background: var(--bg-card);
+      border: 1px solid var(--border-glass);
+      cursor: pointer;
+      transition: all var(--transition-smooth);
+      text-align: center;
+      text-decoration: none;
+    }
+    .tradition-preview:hover {
+      transform: translateY(-6px);
+      border-color: rgba(124,111,255,0.4);
+      box-shadow: var(--shadow-glow);
+    }
+    .tradition-preview-emoji { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; }
+    .tradition-preview-name { font-family: var(--font-display); font-weight: 600; font-size: 0.95rem; display: block; margin-bottom: 0.25rem; }
+    .tradition-preview-region { font-size: 0.8rem; color: var(--text-muted); }
+
+    /* ── CTA Section ── */
+    .cta-section {
+      text-align: center;
+      padding: 5rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-glow {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at center, rgba(124,111,255,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-section h2 { margin-bottom: 1rem; }
+    .cta-section p { margin-bottom: 2rem; }
+
+    /* ── Process Steps ── */
+    .steps-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem; position: relative;
+    }
+    .step { text-align: center; }
+    .step-number {
+      width: 56px; height: 56px;
+      background: linear-gradient(135deg, var(--color-purple), #5a4bff);
+      border-radius: var(--radius-full);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-weight: 800; font-size: 1.3rem;
+      margin: 0 auto 1rem;
+      box-shadow: 0 4px 20px rgba(124,111,255,0.4);
+    }
+    .step h4 { margin-bottom: 0.5rem; }
+
+    @media (max-width: 768px) {
+      .stats-inner { grid-template-columns: repeat(2,1fr); }
+    }
+    @media (max-width: 480px) {
+      .stats-inner { grid-template-columns: 1fr 1fr; }
+      .hero-actions { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Background Orbs -->
+<div class="bg-orbs" aria-hidden="true">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+</div>
+
+<!-- Navigation -->
+<nav class="nav" role="navigation" aria-label="Main navigation">
+  <a href="index.html" class="nav-brand" aria-label="ClassicaLens Home">
+    <div class="nav-brand-icon" aria-hidden="true">🎵</div>
+    <span class="nav-brand-text">ClassicaLens</span>
+  </a>
+  <ul class="nav-links" role="list">
+    <li><a href="index.html" class="nav-link" role="listitem">Home</a></li>
+    <li><a href="analyzer.html" class="nav-link" role="listitem">Analyze</a></li>
+    <li><a href="explorer.html" class="nav-link" role="listitem">Explore</a></li>
+    <li><a href="learn.html" class="nav-link" role="listitem">Learn</a></li>
+  </ul>
+  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle light/dark mode" title="Toggle theme">
+    <div class="theme-toggle-thumb" id="themeThumb">🌙</div>
+  </button>
+  <a href="analyzer.html" class="nav-cta">🎙️ Try Analyzer</a>
+</nav>
+
+<!-- Hero Section -->
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero-bg-notes" id="heroNotes" aria-hidden="true"></div>
+  <div class="hero-content">
+    <div class="hero-label" aria-label="Section label">🎼 Classical Music Discovery</div>
+    <h1 class="hero-title" id="hero-title">
+      Hear the World's
+      <span class="gradient-text">Musical Heritage</span>
+    </h1>
+    <p class="hero-subtitle">
+      Upload a recording, hum a melody, or explore by region — ClassicaLens identifies
+      musical style, cultural context, and emotional depth. No prior knowledge needed.
+    </p>
+    <div class="hero-actions">
+      <a href="analyzer.html" class="btn btn-primary btn-lg" id="hero-analyze-btn">
+        🎙️ Analyze Music
+      </a>
+      <a href="explorer.html" class="btn btn-secondary btn-lg" id="hero-explore-btn">
+        🌍 Explore Traditions
+      </a>
+    </div>
+  </div>
+  <canvas class="hero-waveform" id="heroWaveform" aria-hidden="true"></canvas>
+</section>
+
+<!-- Stats Bar -->
+<div class="stats-bar" aria-label="App statistics">
+  <div class="stats-inner">
+    <div class="stat-item reveal">
+      <div class="stat-number" id="stat-traditions">0</div>
+      <div class="stat-label">Classical Traditions</div>
+    </div>
+    <div class="stat-item reveal">
+      <div class="stat-number" id="stat-regions">0</div>
+      <div class="stat-label">World Regions</div>
+    </div>
+    <div class="stat-item reveal">
+      <div class="stat-number" id="stat-artists">0</div>
+      <div class="stat-label">Featured Artists</div>
+    </div>
+    <div class="stat-item reveal">
+      <div class="stat-number" id="stat-works">0</div>
+      <div class="stat-label">Famous Works</div>
+    </div>
+  </div>
+</div>
+
+<!-- Features Section -->
+<main>
+  <section class="section" aria-labelledby="features-title">
+    <div class="section-header">
+      <div class="section-label" aria-label="Section type">✨ What We Do</div>
+      <h2 id="features-title">Everything You Need to <span class="gradient-text">Discover Classical Music</span></h2>
+      <p class="section-subtitle">A complete toolkit for exploring the world's classical music heritage — built for curious beginners and passionate learners alike.</p>
+    </div>
+    <div class="features-grid">
+      <div class="glass-card feature-card reveal" id="feature-analyze">
+        <span class="feature-icon" aria-hidden="true">🎙️</span>
+        <h3>Audio Analyzer</h3>
+        <p>Upload an audio clip or record with your microphone. Our engine analyzes tempo, frequency patterns, and energy to identify the musical tradition and style.</p>
+        <a href="analyzer.html" class="btn btn-secondary btn-sm mt-3">Try Now →</a>
+      </div>
+      <div class="glass-card feature-card reveal" id="feature-context">
+        <span class="feature-icon" aria-hidden="true">🌍</span>
+        <h3>Cultural Context</h3>
+        <p>Go beyond the sound. Learn the historical roots, social significance, and emotional vocabulary of each tradition — explained in plain, engaging language.</p>
+        <a href="explorer.html" class="btn btn-secondary btn-sm mt-3">Explore →</a>
+      </div>
+      <div class="glass-card feature-card reveal" id="feature-learn">
+        <span class="feature-icon" aria-hidden="true">📖</span>
+        <h3>Beginner Lessons</h3>
+        <p>What is a Raga? What makes music "Classical"? Our beginner lessons break down complex musical concepts into simple, relatable ideas anyone can understand.</p>
+        <a href="learn.html" class="btn btn-secondary btn-sm mt-3">Learn →</a>
+      </div>
+      <div class="glass-card feature-card reveal" id="feature-region">
+        <span class="feature-icon" aria-hidden="true">🗺️</span>
+        <h3>Regional Explorer</h3>
+        <p>Browse classical traditions by geographic region. From South Asia to Latin America, discover the rich diversity of human musical expression across the globe.</p>
+        <a href="explorer.html" class="btn btn-secondary btn-sm mt-3">Browse →</a>
+      </div>
+      <div class="glass-card feature-card reveal" id="feature-artists">
+        <span class="feature-icon" aria-hidden="true">🎤</span>
+        <h3>Artist Recommendations</h3>
+        <p>Every tradition comes with curated lists of key artists and famous works — a gateway to start listening and building a deeper appreciation for each style.</p>
+        <a href="explorer.html" class="btn btn-secondary btn-sm mt-3">Discover →</a>
+      </div>
+      <div class="glass-card feature-card reveal" id="feature-mood">
+        <span class="feature-icon" aria-hidden="true">🎭</span>
+        <h3>Mood Exploration</h3>
+        <p>Feeling contemplative? Joyful? Nostalgic? Explore traditions by the mood and emotion they evoke — find music that matches how you feel right now.</p>
+        <a href="explorer.html#moods" class="btn btn-secondary btn-sm mt-3">Explore Moods →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section class="section" aria-labelledby="how-title">
+    <div class="section-header">
+      <div class="section-label">🔬 How It Works</div>
+      <h2 id="how-title">From Sound to <span class="gradient-text">Understanding</span></h2>
+    </div>
+    <div class="steps-grid">
+      <div class="step reveal">
+        <div class="step-number" aria-hidden="true">1</div>
+        <h4>Input Audio</h4>
+        <p class="text-muted">Upload a file, record via microphone, or select a demo sample to begin.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-number" aria-hidden="true">2</div>
+        <h4>Analyze Patterns</h4>
+        <p class="text-muted">We extract tempo, frequency distribution, energy, and rhythmic features from the audio.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-number" aria-hidden="true">3</div>
+        <h4>Match Tradition</h4>
+        <p class="text-muted">Audio features are matched against our knowledge base of classical traditions worldwide.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-number" aria-hidden="true">4</div>
+        <h4>Understand & Explore</h4>
+        <p class="text-muted">Receive rich cultural context, beginner explanations, and artist recommendations.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Traditions Preview -->
+  <section class="section" aria-labelledby="traditions-title">
+    <div class="section-header">
+      <div class="section-label">🎵 Traditions</div>
+      <h2 id="traditions-title">Explore <span class="gradient-text">Classical Traditions</span></h2>
+      <p class="section-subtitle">10 classical music traditions across 5 continents. Scroll to browse, click to discover.</p>
+    </div>
+    <div class="traditions-scroll" id="traditionsScroll" aria-label="Musical traditions carousel"></div>
+    <div class="text-center mt-4">
+      <a href="explorer.html" class="btn btn-primary" id="view-all-btn">View All Traditions →</a>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section" aria-labelledby="cta-title">
+    <div class="cta-glow" aria-hidden="true"></div>
+    <div class="section-label">🚀 Get Started</div>
+    <h2 id="cta-title">Ready to Discover Your <span class="gradient-text">Classical Heritage?</span></h2>
+    <p class="section-subtitle">Start with the Audio Analyzer — upload any clip and let ClassicaLens guide you into a world of musical tradition.</p>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:2rem;">
+      <a href="analyzer.html" class="btn btn-gold btn-lg" id="cta-analyze-btn">🎙️ Analyze Music Now</a>
+      <a href="learn.html" class="btn btn-secondary btn-lg" id="cta-learn-btn">📖 Start Learning</a>
+    </div>
+  </section>
+</main>
+
+<!-- About This Project -->
+<section class="about-section" id="about" aria-labelledby="about-title">
+  <div class="about-grid">
+    <!-- Left: Project Info -->
+    <div class="about-text reveal">
+      <div class="section-label">ℹ️ About This Project</div>
+      <h2 id="about-title">Why We Built <span class="gradient-text">ClassicaLens</span></h2>
+      <p>Classical music traditions worldwide are at risk of fading into obscurity. Younger audiences find them inaccessible — not because the music isn't beautiful, but because there's no bridge from curiosity to understanding.</p>
+      <p>ClassicaLens was built to be that bridge. By combining audio analysis with a rich cultural knowledge base and beginner-friendly explanations, we make it possible for anyone — regardless of background or training — to genuinely connect with classical music heritage.</p>
+      <div class="about-pillars">
+        <div class="about-pillar">
+          <span class="about-pillar-icon">🎙️</span>
+          <div class="about-pillar-text">
+            <strong>Analyze Short Recordings</strong>
+            <span>Identify style, mood and cultural origin from audio snippets</span>
+          </div>
+        </div>
+        <div class="about-pillar">
+          <span class="about-pillar-icon">🌍</span>
+          <div class="about-pillar-text">
+            <strong>Explain Cultural Context</strong>
+            <span>Plain-language descriptions — no theory degree required</span>
+          </div>
+        </div>
+        <div class="about-pillar">
+          <span class="about-pillar-icon">🏛️</span>
+          <div class="about-pillar-text">
+            <strong>Preserve Heritage Music</strong>
+            <span>Creating new entry points into endangered classical traditions</span>
+          </div>
+        </div>
+        <div class="about-pillar">
+          <span class="about-pillar-icon">🎓</span>
+          <div class="about-pillar-text">
+            <strong>Support Beginners</strong>
+            <span>Lessons, glossary and quiz — learning at your own pace</span>
+          </div>
+        </div>
+      </div>
+      <div class="hackathon-badge">🏆 VIBE ATHON — Classical Music Heritage</div>
+    </div>
+
+    <!-- Right: Team -->
+    <div class="team-panel reveal">
+      <div class="team-label">👥 The Team</div>
+      <div class="team-name gradient-text">The Silicon Savants</div>
+      <p class="team-subtitle">Builders of ClassicaLens · VIBE ATHON 2026</p>
+      <div class="members-grid">
+        <div class="about-member-card">
+          <div class="member-avatar" style="background:linear-gradient(135deg,#7c6fff,#5a4bff);color:#fff;position:relative;overflow:hidden;">
+            <span style="position:absolute;z-index:1;">JV</span>
+            <img src="assets/team/Jaydeep.jpeg" alt="Jaydeep Verma" style="width:100%;height:100%;object-fit:cover;position:relative;z-index:2;" onerror="this.style.opacity='0'">
+          </div>
+          <div class="member-info">
+            <strong>Jaydeep Verma</strong>
+            <span>🎨 UI/UX Design &amp; Frontend</span>
+          </div>
+        </div>
+        <div class="about-member-card">
+          <div class="member-avatar" style="background:linear-gradient(135deg,#f5a623,#e8950a);color:#1a0f00;position:relative;overflow:hidden;">
+            <span style="position:absolute;z-index:1;">SS</span>
+            <img src="assets/team/Subham.jpeg" alt="Subham Swarnakar" style="width:100%;height:100%;object-fit:cover;position:relative;z-index:2;" onerror="this.style.opacity='0'">
+          </div>
+          <div class="member-info">
+            <strong>Subham Swarnakar</strong>
+            <span>🔬 Audio Engine &amp; Pattern Analysis</span>
+          </div>
+        </div>
+        <div class="about-member-card">
+          <div class="member-avatar" style="background:linear-gradient(135deg,#00d4ff,#00a0cc);color:#001a22;position:relative;overflow:hidden;">
+            <span style="position:absolute;z-index:1;">MM</span>
+            <img src="assets/team/Maitrish.jpeg" alt="Maitrish Mandal" style="width:100%;height:100%;object-fit:cover;position:relative;z-index:2;" onerror="this.style.opacity='0'">
+          </div>
+          <div class="member-info">
+            <strong>Maitrish Mandal</strong>
+            <span>📚 Knowledge Base &amp; Cultural Research</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer" role="contentinfo">
+  <div class="footer-brand gradient-text">ClassicaLens 🎵</div>
+  <nav class="footer-links" aria-label="Footer navigation">
+    <a href="index.html" class="footer-link">Home</a>
+    <a href="analyzer.html" class="footer-link">Analyzer</a>
+    <a href="explorer.html" class="footer-link">Explorer</a>
+    <a href="learn.html" class="footer-link">Learn</a>
+  </nav>
+  <p class="footer-copy">Built for VIBE ATHON — Making classical music accessible for everyone 🌍</p>
+</footer>
+
+<!-- Scripts -->
+<script src="js/knowledge-base.js"></script>
+<script src="js/ui.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // ─── Theme Toggle ───
+    const savedTheme = localStorage.getItem('classicalens-theme') || 'dark';
+    applyTheme(savedTheme);
+
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      const thumb = document.getElementById('themeThumb');
+      if (thumb) thumb.textContent = theme === 'light' ? '☀️' : '🌙';
+      localStorage.setItem('classicalens-theme', theme);
+    }
+
+    window.toggleTheme = function() {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      applyTheme(current === 'dark' ? 'light' : 'dark');
+    };
+
+    // Floating notes
+    UI.createFloatingNotes(document.getElementById('heroNotes'), 20);
+
+    // Animated hero waveform
+    const canvas = document.getElementById('heroWaveform');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = 180;
+      let t = 0;
+      function drawHeroWave() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const grad = ctx.createLinearGradient(0, 0, canvas.width, 0);
+        grad.addColorStop(0, '#7c6fff');
+        grad.addColorStop(0.5, '#f5a623');
+        grad.addColorStop(1, '#00d4ff');
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        for (let x = 0; x < canvas.width; x++) {
+          const y = 90 +
+            Math.sin(x * 0.012 + t) * 25 +
+            Math.sin(x * 0.025 + t * 1.3) * 15 +
+            Math.sin(x * 0.007 + t * 0.7) * 35;
+          x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        t += 0.02;
+        requestAnimationFrame(drawHeroWave);
+      }
+      drawHeroWave();
+      window.addEventListener('resize', () => { canvas.width = window.innerWidth; });
+    }
+
+    // Populate traditions scroll
+    const scroll = document.getElementById('traditionsScroll');
+    MUSIC_KB.traditions.forEach(t => {
+      const a = document.createElement('a');
+      a.href = `explorer.html#${t.id}`;
+      a.className = 'tradition-preview';
+      a.innerHTML = `
+        <span class="tradition-preview-emoji">${t.emoji}</span>
+        <span class="tradition-preview-name">${t.name}</span>
+        <span class="tradition-preview-region">${t.flag} ${t.country}</span>
+      `;
+      scroll.appendChild(a);
+    });
+
+    // Stats counters
+    const stats = [
+      { id: 'stat-traditions', target: MUSIC_KB.traditions.length },
+      { id: 'stat-regions', target: MUSIC_KB.regions.length },
+      { id: 'stat-artists', target: MUSIC_KB.traditions.reduce((s, t) => s + t.keyArtists.length, 0) },
+      { id: 'stat-works', target: MUSIC_KB.traditions.reduce((s, t) => s + t.famousWorks.length, 0) }
+    ];
+
+    const statsObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const stat = stats.find(s => s.id === entry.target.id);
+          if (stat) UI.animateCount(entry.target, stat.target);
+          statsObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.5 });
+
+    stats.forEach(s => {
+      const el = document.getElementById(s.id);
+      if (el) statsObserver.observe(el);
+    });
+  });
+</script>
+</body>
+</html>
